@@ -1,0 +1,18 @@
+# Backend (Python)
+backend/.venv/
+backend/voya.db
+backend/__pycache__/
+backend/**/__pycache__/
+*.pyc
+
+# Flutter (both apps)
+**/.dart_tool/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/build/
+**/.idea/
+**/*.iml
+**/.vscode/
+
+# OS cruft
+.DS_Store

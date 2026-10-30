@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Voya Fleet</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root{
+  --bg:#FBF4E8; --surface:#FFFFFF; --ink:#2B2117; --ink-soft:#6B5D4D;
+  --line:#E3D5BC; --ochre:#C96A2E; --indigo:#2C4356; --gold:#D9A441;
+  --good:#3E7D52; --warn:#B4552C; --crit:#9B3B3B;
+}
+*{box-sizing:border-box;}
+body{margin:0; background:var(--bg); color:var(--ink); font-family:"Segoe UI",sans-serif;}
+header{padding:18px 24px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:12px;}
+header h1{font-size:1.3rem; margin:0; font-weight:700;}
+header .dot{width:10px; height:10px; border-radius:50%; background:var(--ochre);}
+main{max-width:1100px; margin:0 auto; padding:24px;}
+.panel{background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:18px 20px; margin-bottom:20px;}
+.panel h2{font-size:1.05rem; margin:0 0 12px;}
+.row{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;}
+input,select,button{
+  font-size:0.9rem; padding:8px 10px; border:1px solid var(--line); border-radius:8px;
+  background:var(--bg); color:var(--ink);
+}
+button{background:var(--ochre); color:#fff; border:none; cursor:pointer; font-weight:600;}
+button:hover{opacity:0.9;}
+button.secondary{background:var(--indigo);}
+table{width:100%; border-collapse:collapse; font-size:0.88rem; margin-top:8px;}
+th,td{text-align:left; padding:8px 10px; border-bottom:1px solid var(--line);}
+th{font-size:0.72rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink-soft);}
+.seat-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(44px,1fr)); gap:6px; margin-top:10px;}
+.seat{
+  aspect-ratio:1; border-radius:6px; display:flex; align-items:center; justify-content:center;
+  font-size:0.78rem; font-weight:600; color:#fff;
+}
+.seat.available{background:var(--good);}
+.seat.held{background:var(--gold); color:var(--ink);}
+.seat.booked{background:var(--crit);}
+.pill{font-size:0.72rem; padding:2px 8px; border-radius:100px; font-weight:600;}
+.pill.confirmed{background:#dff0e3; color:var(--good);}
+.pill.pending_payment{background:#f6e6d8; color:var(--warn);}
+.pill.boarded{background:#dde6ed; color:var(--indigo);}
+small{color:var(--ink-soft);}
+.msg{font-size:0.85rem; margin-top:8px;}
+.msg.err{color:var(--crit);}
+.msg.ok{color:var(--good);}
+</style>
+</head>
+<body>
+<header><div class="dot"></div><h1>Voya Fleet</h1><small id="who"></small></header>
+<main>
+
+  <div class="panel" id="login-panel">
+    <h2>Sign in</h2>
+    <div class="row">
+      <input id="login-phone" placeholder="Phone number">
+      <input id="login-password" placeholder="Password" type="password">
+      <button onclick="login()">Sign in</button>
+    </div>
+    <div id="login-msg" class="msg"></div>
+  </div>
+
+  <div id="app-panels" style="display:none;">
+
+  <div class="panel">
+    <h2>1. Operator &amp; vehicle</h2>
+    <div class="row">
+      <input id="op-name" placeholder="Operator name">
+      <input id="op-country" placeholder="Country" value="Côte d'Ivoire">
+      <button onclick="createOperator()">Create operator</button>
+    </div>
+    <div class="row">
+      <select id="op-select"></select>
+      <input id="veh-plate" placeholder="Plate number">
+      <input id="veh-seats" placeholder="Seat count" type="number" value="30">
+      <button onclick="createVehicle()">Add vehicle</button>
+    </div>
+    <div id="op-msg" class="msg"></div>
+  </div>
+
+  <div class="panel">
+    <h2>2. Route &amp; trip</h2>
+    <div class="row">
+      <input id="rt-origin" placeholder="Origin" value="Abidjan">
+      <input id="rt-dest" placeholder="Destination" value="Bouaké">
+      <input id="rt-fare" placeholder="Base fare" type="number" value="3500">
+      <button onclick="createRoute()">Create route</button>
+    </div>
+    <div class="row">
+      <select id="rt-select"></select>
+      <select id="veh-select"></select>
+      <input id="trip-depart" type="datetime-local">
+      <button onclick="createTrip()">Schedule trip</button>
+    </div>
+    <div id="trip-msg" class="msg"></div>
+  </div>
+
+  <div class="panel">
+    <h2>3. Manifest</h2>
+    <div class="row">
+      <select id="manifest-trip-select"></select>
+      <button class="secondary" onclick="loadManifest()">Load manifest</button>
+    </div>
+    <div id="seat-grid" class="seat-grid"></div>
+    <table id="manifest-table"><thead>
+      <tr><th>Rider</th><th>Phone</th><th>Seat</th><th>Source</th><th>Status</th></tr>
+    </thead><tbody></tbody></table>
+  </div>
+
+  </div>
+
+</main>
+
+<script>
+const API = "";
+
+async function api(path, opts = {}) {
+  const res = await fetch(API + path, { ...opts, credentials: "include" });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.detail || res.statusText);
+  }
+  return res.json();
+}
+
+async function login() {
+  const msgEl = document.getElementById("login-msg");
+  msgEl.textContent = "";
+  msgEl.className = "msg";
+  try {
+    const phone = document.getElementById("login-phone").value.trim();
+    const password = document.getElementById("login-password").value;
+    const me = await api("/auth/login", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({ phone, password }),
+    });
+    await boot(me);
+  } catch (e) {
+    msgEl.textContent = e.message;
+    msgEl.className = "msg err";
+  }
+}
+
+async function boot(me) {
+  document.getElementById("login-panel").style.display = "none";
+  document.getElementById("app-panels").style.display = "";
+  document.getElementById("who").textContent = `${me.name} · ${me.role}`;
+  await refreshOperators();
+  await refreshRoutes();
+  await refreshTrips();
+}
+
+let operators = [];
+let vehicles = [];
+let routes = [];
+let trips = [];
+
+async function refreshOperators() {
+  operators = await api("/operators");
+  const sel = document.getElementById("op-select");
+  sel.innerHTML = operators.map(o => `<option value="${o.id}">${o.name} (${o.status})</option>`).join("");
+  if (operators.length) await refreshVehicles(sel.value);
+}
+
+async function refreshVehicles(operatorId) {
+  if (!operatorId) { vehicles = []; } else {
+    vehicles = await api(`/operators/${operatorId}/vehicles`);
+  }
+  const sel = document.getElementById("veh-select");
+  sel.innerHTML = vehicles.map(v => `<option value="${v.id}">${v.plate_number} (${v.seat_count} seats)</option>`).join("");
+}
+
+async function refreshRoutes() {
+  routes = await api("/routes");
+  const sel = document.getElementById("rt-select");
+  sel.innerHTML = routes.map(r => `<option value="${r.id}">${r.origin} → ${r.destination}</option>`).join("");
+}
+
+async function refreshTrips() {
+  trips = await api("/trips");
+  const sel = document.getElementById("manifest-trip-select");
+  sel.innerHTML = trips.map(t =>
+    `<option value="${t.id}">${t.origin} → ${t.destination} · ${new Date(t.departure_at).toLocaleString()}</option>`
+  ).join("");
+}
+
+function setMsg(id, text, ok) {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.className = "msg " + (ok ? "ok" : "err");
+}
+
+async function createOperator() {
+  try {
+    const name = document.getElementById("op-name").value.trim();
+    const country = document.getElementById("op-country").value.trim();
+    if (!name) throw new Error("operator name is required");
+    await api("/operators", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({name, country})
+    });
+    await refreshOperators();
+    setMsg("op-msg", `Operator "${name}" created.`, true);
+  } catch (e) { setMsg("op-msg", e.message, false); }
+}
+
+async function createVehicle() {
+  try {
+    const operator_id = document.getElementById("op-select").value;
+    const plate_number = document.getElementById("veh-plate").value.trim();
+    const seat_count = parseInt(document.getElementById("veh-seats").value, 10);
+    if (!operator_id) throw new Error("create an operator first");
+    if (!plate_number) throw new Error("plate number is required");
+    await api("/operators/vehicles", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({operator_id, plate_number, seat_count})
+    });
+    await refreshVehicles(operator_id);
+    setMsg("op-msg", `Vehicle "${plate_number}" added.`, true);
+  } catch (e) { setMsg("op-msg", e.message, false); }
+}
+
+document.getElementById("op-select").addEventListener("change", e => refreshVehicles(e.target.value));
+
+async function createRoute() {
+  try {
+    const operator_id = document.getElementById("op-select").value;
+    const origin = document.getElementById("rt-origin").value.trim();
+    const destination = document.getElementById("rt-dest").value.trim();
+    const base_fare = parseFloat(document.getElementById("rt-fare").value);
+    if (!operator_id) throw new Error("create an operator first");
+    await api("/routes", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({operator_id, origin, destination, base_fare})
+    });
+    await refreshRoutes();
+    setMsg("trip-msg", `Route ${origin} → ${destination} created.`, true);
+  } catch (e) { setMsg("trip-msg", e.message, false); }
+}
+
+async function createTrip() {
+  try {
+    const route_id = document.getElementById("rt-select").value;
+    const vehicle_id = document.getElementById("veh-select").value;
+    const departLocal = document.getElementById("trip-depart").value;
+    if (!route_id) throw new Error("create a route first");
+    if (!vehicle_id) throw new Error("add a vehicle first");
+    if (!departLocal) throw new Error("pick a departure time");
+    await api("/trips", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({route_id, vehicle_id, departure_at: new Date(departLocal).toISOString()})
+    });
+    await refreshTrips();
+    setMsg("trip-msg", "Trip scheduled.", true);
+  } catch (e) { setMsg("trip-msg", e.message, false); }
+}
+
+async function loadManifest() {
+  const tripId = document.getElementById("manifest-trip-select").value;
+  if (!tripId) return;
+  const trip = await api(`/trips/${tripId}`);
+  const grid = document.getElementById("seat-grid");
+  grid.innerHTML = trip.seats
+    .sort((a, b) => a.seat_number - b.seat_number)
+    .map(s => `<div class="seat ${s.status}">${s.seat_number}</div>`)
+    .join("");
+
+  const bookings = await api(`/trips/${tripId}/manifest`);
+  const tbody = document.querySelector("#manifest-table tbody");
+  tbody.innerHTML = bookings.map(b => `
+    <tr>
+      <td>${b.rider_name}</td>
+      <td>${b.rider_phone}</td>
+      <td>${trip.seats.find(s => s.id === b.seat_id)?.seat_number ?? "—"}</td>
+      <td>${b.booking_source}</td>
+      <td><span class="pill ${b.status}">${b.status.replace("_"," ")}</span></td>
+    </tr>
+  `).join("") || `<tr><td colspan="5"><small>No bookings yet.</small></td></tr>`;
+}
+
+(async function init() {
+  try {
+    const me = await api("/auth/me");
+    await boot(me);
+  } catch (e) {
+    // not logged in yet — login panel stays visible
+  }
+})();
+</script>
+</body>
+</html>

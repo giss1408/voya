@@ -1,0 +1,510 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Voya</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root{
+  --bg:#FBF4E8; --surface:#FFFFFF; --ink:#2B2117; --ink-soft:#6B5D4D;
+  --line:#E3D5BC; --ochre:#C96A2E; --indigo:#2C4356; --gold:#D9A441;
+  --good:#3E7D52; --warn:#B4552C; --crit:#9B3B3B;
+}
+*{box-sizing:border-box;}
+html,body{margin:0; min-height:100%;}
+body{
+  background:var(--bg); color:var(--ink); font-family:"Segoe UI",sans-serif;
+  display:flex; justify-content:center;
+}
+.phone{width:100%; max-width:430px; min-height:100vh; display:flex; flex-direction:column;}
+
+header{
+  padding:16px 18px; display:flex; align-items:center; gap:10px;
+  border-bottom:1px solid var(--line); position:sticky; top:0; background:var(--bg); z-index:5;
+}
+header .back{
+  border:none; background:none; font-size:1.2rem; color:var(--ink); cursor:pointer;
+  padding:4px 6px; visibility:hidden;
+}
+header .back.show{visibility:visible;}
+header h1{font-size:1.1rem; margin:0; font-weight:700; flex:1;}
+header .dot{width:9px; height:9px; border-radius:50%; background:var(--ochre);}
+
+main{flex:1; padding:18px; padding-bottom:40px;}
+[hidden]{display:none !important;}
+
+label{display:block; font-size:0.78rem; color:var(--ink-soft); margin:14px 0 6px; font-weight:600;}
+label:first-of-type{margin-top:0;}
+input,select{
+  width:100%; font-size:0.95rem; padding:11px 12px; border:1px solid var(--line);
+  border-radius:10px; background:var(--surface); color:var(--ink);
+}
+button.primary{
+  width:100%; margin-top:20px; padding:13px; border:none; border-radius:10px;
+  background:var(--ochre); color:#fff; font-weight:700; font-size:0.98rem; cursor:pointer;
+}
+button.primary:disabled{opacity:0.5; cursor:default;}
+button.ghost{
+  width:100%; margin-top:10px; padding:11px; border:1px solid var(--line); border-radius:10px;
+  background:transparent; color:var(--ink); font-weight:600; font-size:0.92rem; cursor:pointer;
+}
+.trip-card{
+  background:var(--surface); border:1px solid var(--line); border-radius:12px;
+  padding:14px 16px; margin-bottom:12px; cursor:pointer;
+}
+.trip-card:active{opacity:0.85;}
+.trip-card .route{font-weight:700; font-size:1rem;}
+.trip-card .meta{display:flex; justify-content:space-between; margin-top:8px; font-size:0.85rem; color:var(--ink-soft);}
+.trip-card .fare{font-weight:700; color:var(--ochre); font-size:1.05rem;}
+.trip-card .seats-left{font-size:0.78rem; color:var(--good); margin-top:4px;}
+.trip-card .seats-left.low{color:var(--warn);}
+.trip-card .seats-left.none{color:var(--crit);}
+
+.seat-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:14px;}
+.seat-btn{
+  aspect-ratio:1; border-radius:8px; border:1px solid var(--line); background:var(--surface);
+  display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.9rem;
+  color:var(--ink); cursor:pointer;
+}
+.seat-btn.taken{background:var(--line); color:var(--ink-soft); cursor:default;}
+.seat-btn.selected{background:var(--ochre); color:#fff; border-color:var(--ochre);}
+.legend{display:flex; gap:16px; margin-top:12px; font-size:0.78rem; color:var(--ink-soft);}
+.legend span{display:inline-flex; align-items:center; gap:6px;}
+.swatch{width:12px; height:12px; border-radius:3px; display:inline-block;}
+.swatch.free{background:var(--surface); border:1px solid var(--line);}
+.swatch.taken{background:var(--line);}
+.swatch.sel{background:var(--ochre);}
+.hold-banner{
+  margin-top:14px; padding:10px 12px; border-radius:10px; background:#f6e6d8; color:var(--warn);
+  font-size:0.85rem; font-weight:600; text-align:center;
+}
+
+.pay-option{
+  display:flex; align-items:center; gap:12px; padding:13px 14px; margin-top:10px;
+  border:1px solid var(--line); border-radius:10px; cursor:pointer; background:var(--surface);
+}
+.pay-option.active{border-color:var(--ochre); background:#fdf0e7;}
+.pay-option input{width:auto;}
+.pay-option .label{font-weight:600; font-size:0.92rem;}
+.pay-option .sub{font-size:0.78rem; color:var(--ink-soft);}
+
+.summary-row{display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid var(--line); font-size:0.9rem;}
+.summary-row:last-child{border-bottom:none; font-weight:700; padding-top:12px;}
+
+.ticket{
+  background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:20px;
+  text-align:center;
+}
+.ticket .status{
+  display:inline-block; font-size:0.72rem; font-weight:700; letter-spacing:0.05em; text-transform:uppercase;
+  padding:4px 10px; border-radius:100px; margin-bottom:12px;
+}
+.ticket .status.confirmed{background:#dff0e3; color:var(--good);}
+.ticket .status.pending_payment{background:#f6e6d8; color:var(--warn);}
+.ticket img{width:170px; height:170px; margin:10px auto; display:block; border-radius:8px; background:#fff;}
+.ticket .code{font-family:monospace; font-size:1.6rem; letter-spacing:0.12em; font-weight:700; margin-top:6px;}
+.ticket .route-big{font-weight:700; font-size:1.15rem; margin-top:4px;}
+.ticket .fine{font-size:0.82rem; color:var(--ink-soft); margin-top:4px;}
+.ticket hr{border:none; border-top:1px dashed var(--line); margin:16px 0;}
+
+.msg{font-size:0.85rem; margin-top:10px; min-height:1.2em;}
+.msg.err{color:var(--crit);}
+.msg.ok{color:var(--good);}
+.empty{text-align:center; color:var(--ink-soft); font-size:0.9rem; padding:40px 10px;}
+.saved-list .item{
+  background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:12px 14px;
+  margin-bottom:10px; cursor:pointer;
+}
+.saved-list .item .route{font-weight:700; font-size:0.92rem;}
+.saved-list .item .meta{font-size:0.78rem; color:var(--ink-soft); margin-top:4px;}
+nav.tabs{
+  display:flex; border-top:1px solid var(--line); background:var(--surface);
+  position:sticky; bottom:0;
+}
+nav.tabs button{
+  flex:1; padding:12px 0; border:none; background:none; font-size:0.78rem; font-weight:600;
+  color:var(--ink-soft); cursor:pointer;
+}
+nav.tabs button.active{color:var(--ochre);}
+</style>
+</head>
+<body>
+<div class="phone">
+  <header>
+    <button class="back" id="back-btn" onclick="goBack()">←</button>
+    <div class="dot"></div>
+    <h1 id="screen-title">Voya</h1>
+  </header>
+  <main id="main"></main>
+  <nav class="tabs">
+    <button id="tab-search" class="active" onclick="showSearch()">Search</button>
+    <button id="tab-tickets" onclick="showMyTickets()">My tickets</button>
+  </nav>
+</div>
+
+<script>
+const API = "";
+let state = {
+  screen: "search",
+  stack: [],
+  trips: [],
+  trip: null,
+  seats: [],
+  selectedSeat: null,
+  hold: null,
+  booking: null,
+  paymentMethod: "cash_on_boarding",
+};
+
+async function api(path, opts) {
+  const res = await fetch(API + path, opts);
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(body.detail || res.statusText);
+  return body;
+}
+
+function savedBookings() {
+  try { return JSON.parse(localStorage.getItem("voya_bookings") || "[]"); }
+  catch (e) { return []; }
+}
+function saveBooking(entry) {
+  try {
+    const list = savedBookings().filter(b => b.id !== entry.id);
+    list.unshift(entry);
+    localStorage.setItem("voya_bookings", JSON.stringify(list.slice(0, 20)));
+  } catch (e) { /* storage unavailable, booking still works, just not remembered */ }
+}
+
+function render(html, title, { back } = {}) {
+  document.getElementById("main").innerHTML = html;
+  document.getElementById("screen-title").textContent = title;
+  document.getElementById("back-btn").classList.toggle("show", !!back);
+}
+
+function goBack() {
+  const prev = state.stack.pop();
+  if (prev) prev();
+  else showSearch();
+}
+
+function setTab(active) {
+  document.getElementById("tab-search").classList.toggle("active", active === "search");
+  document.getElementById("tab-tickets").classList.toggle("active", active === "tickets");
+}
+
+/* ---------- Screen: Search ---------- */
+function showSearch() {
+  state.stack = [];
+  setTab("search");
+  render(`
+    <label>From</label>
+    <input id="s-origin" placeholder="e.g. Abidjan" value="${state.lastOrigin || ""}">
+    <label>To</label>
+    <input id="s-dest" placeholder="e.g. Bouaké" value="${state.lastDest || ""}">
+    <label>Date (optional)</label>
+    <input id="s-date" type="date">
+    <button class="primary" onclick="runSearch()">Search trips</button>
+    <div id="s-msg" class="msg"></div>
+    <div id="s-results" style="margin-top:20px;"></div>
+  `, "Find a trip");
+}
+
+async function runSearch() {
+  const origin = document.getElementById("s-origin").value.trim();
+  const dest = document.getElementById("s-dest").value.trim();
+  const date = document.getElementById("s-date").value;
+  state.lastOrigin = origin;
+  state.lastDest = dest;
+  const msgEl = document.getElementById("s-msg");
+  const resultsEl = document.getElementById("s-results");
+  msgEl.textContent = "";
+  msgEl.className = "msg";
+  resultsEl.innerHTML = "";
+  try {
+    const params = new URLSearchParams();
+    if (origin) params.set("origin", origin);
+    if (dest) params.set("destination", dest);
+    if (date) params.set("date", date);
+    const trips = await api("/trips?" + params.toString());
+    state.trips = trips;
+    if (!trips.length) {
+      resultsEl.innerHTML = `<div class="empty">No trips found. Try a different route or date.</div>`;
+      return;
+    }
+    resultsEl.innerHTML = trips.map((t, i) => {
+      const free = t.seats.filter(s => s.status === "available").length;
+      const cls = free === 0 ? "none" : free <= 3 ? "low" : "";
+      return `
+        <div class="trip-card" onclick="openTrip(${i})">
+          <div class="route">${t.origin} → ${t.destination}</div>
+          <div class="meta">
+            <span>${new Date(t.departure_at).toLocaleString([], {dateStyle:"medium", timeStyle:"short"})}</span>
+            <span class="fare">${Number(t.fare).toLocaleString()} XOF/GHS</span>
+          </div>
+          <div class="seats-left ${cls}">${free === 0 ? "Fully booked" : free + " seat" + (free === 1 ? "" : "s") + " left"}</div>
+        </div>`;
+    }).join("");
+  } catch (e) {
+    msgEl.textContent = e.message;
+    msgEl.className = "msg err";
+  }
+}
+
+function openTrip(i) {
+  state.trip = state.trips[i];
+  state.stack.push(showSearch);
+  showSeatMap();
+}
+
+/* ---------- Screen: Seat map ---------- */
+async function showSeatMap() {
+  setTab("search");
+  state.selectedSeat = null;
+  state.hold = null;
+  await refreshSeatMap();
+}
+
+async function refreshSeatMap() {
+  const t = await api(`/trips/${state.trip.id}`);
+  state.trip = t;
+  const sorted = [...t.seats].sort((a, b) => a.seat_number - b.seat_number);
+  render(`
+    <div class="route" style="font-weight:700; font-size:1.05rem;">${t.origin} → ${t.destination}</div>
+    <div class="msg" style="margin-top:2px;">${new Date(t.departure_at).toLocaleString([], {dateStyle:"medium", timeStyle:"short"})} · ${Number(t.fare).toLocaleString()} fare</div>
+    <div class="seat-grid" id="seat-grid">
+      ${sorted.map(s => {
+        const taken = s.status !== "available";
+        const sel = state.selectedSeat === s.seat_number;
+        return `<div class="seat-btn ${taken ? "taken" : ""} ${sel ? "selected" : ""}"
+                  ${taken ? "" : `onclick="selectSeat(${s.seat_number})"`}>${s.seat_number}</div>`;
+      }).join("")}
+    </div>
+    <div class="legend">
+      <span><i class="swatch free"></i>Free</span>
+      <span><i class="swatch taken"></i>Taken</span>
+      <span><i class="swatch sel"></i>Selected</span>
+    </div>
+    <div id="hold-area"></div>
+    <div id="seat-msg" class="msg"></div>
+    <button class="primary" id="hold-btn" onclick="holdSeat()" disabled>Select a seat to continue</button>
+  `, "Choose a seat", { back: true });
+}
+
+function selectSeat(num) {
+  state.selectedSeat = num;
+  document.querySelectorAll("#seat-grid .seat-btn").forEach(el => el.classList.remove("selected"));
+  const idx = [...document.querySelectorAll("#seat-grid .seat-btn")].findIndex(el => el.textContent.trim() === String(num));
+  if (idx >= 0) document.querySelectorAll("#seat-grid .seat-btn")[idx].classList.add("selected");
+  const btn = document.getElementById("hold-btn");
+  btn.disabled = false;
+  btn.textContent = `Hold seat ${num} for 90s`;
+}
+
+let holdCountdownTimer = null;
+
+async function holdSeat() {
+  const msgEl = document.getElementById("seat-msg");
+  const btn = document.getElementById("hold-btn");
+  msgEl.textContent = "";
+  msgEl.className = "msg";
+  btn.disabled = true;
+  try {
+    const rider_phone = localStorage.getItem("voya_phone") || "";
+    const hold = await api("/seat-holds", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ trip_id: state.trip.id, seat_number: state.selectedSeat, rider_phone: rider_phone || "unknown" }),
+    });
+    state.hold = hold;
+    state.stack.push(() => refreshSeatMap());
+    showRiderDetails();
+  } catch (e) {
+    msgEl.textContent = e.message;
+    msgEl.className = "msg err";
+    btn.disabled = false;
+    await refreshSeatMap(); // seat may have been taken; refresh availability
+  }
+}
+
+/* ---------- Screen: Rider details + payment ---------- */
+function showRiderDetails() {
+  setTab("search");
+  const savedName = localStorage.getItem("voya_name") || "";
+  const savedPhone = localStorage.getItem("voya_phone") || "";
+  render(`
+    <div class="hold-banner" id="hold-banner"></div>
+    <label>Full name</label>
+    <input id="r-name" placeholder="As it appears on ID" value="${savedName}">
+    <label>Phone number</label>
+    <input id="r-phone" placeholder="+225 07 00 00 00 00" value="${savedPhone}">
+
+    <label style="margin-top:22px;">How will you pay?</label>
+    <label class="pay-option active" data-method="cash_on_boarding">
+      <input type="radio" name="pay" checked onclick="setPayMethod('cash_on_boarding')">
+      <div><div class="label">Cash on boarding</div><div class="sub">Pay the agent when you board</div></div>
+    </label>
+    <label class="pay-option" data-method="mobile_money">
+      <input type="radio" name="pay" onclick="setPayMethod('mobile_money')">
+      <div><div class="label">Mobile money</div><div class="sub">MTN MoMo, Orange Money, Wave</div></div>
+    </label>
+    <label class="pay-option" data-method="card">
+      <input type="radio" name="pay" onclick="setPayMethod('card')">
+      <div><div class="label">Card</div><div class="sub">Visa, Mastercard</div></div>
+    </label>
+
+    <div class="summary-row"><span>Seat</span><span>#${state.selectedSeat}</span></div>
+    <div class="summary-row"><span>Route</span><span>${state.trip.origin} → ${state.trip.destination}</span></div>
+    <div class="summary-row"><span>Total</span><span>${Number(state.trip.fare).toLocaleString()}</span></div>
+
+    <div id="r-msg" class="msg"></div>
+    <button class="primary" id="r-continue" onclick="submitBooking()">Confirm booking</button>
+  `, "Your details", { back: true });
+  startHoldCountdown();
+}
+
+function setPayMethod(method) {
+  state.paymentMethod = method;
+  document.querySelectorAll(".pay-option").forEach(el => {
+    el.classList.toggle("active", el.dataset.method === method);
+  });
+}
+
+function startHoldCountdown() {
+  clearInterval(holdCountdownTimer);
+  const update = () => {
+    const banner = document.getElementById("hold-banner");
+    if (!banner) { clearInterval(holdCountdownTimer); return; }
+    const secsLeft = Math.max(0, Math.round((new Date(state.hold.expires_at) - new Date()) / 1000));
+    if (secsLeft <= 0) {
+      banner.textContent = "Your seat hold expired — search again";
+      clearInterval(holdCountdownTimer);
+      const btn = document.getElementById("r-continue");
+      if (btn) btn.disabled = true;
+      return;
+    }
+    banner.textContent = `Seat held for ${secsLeft}s — complete booking before it expires`;
+  };
+  update();
+  holdCountdownTimer = setInterval(update, 1000);
+}
+
+async function submitBooking() {
+  const name = document.getElementById("r-name").value.trim();
+  const phone = document.getElementById("r-phone").value.trim();
+  const msgEl = document.getElementById("r-msg");
+  const btn = document.getElementById("r-continue");
+  msgEl.textContent = "";
+  msgEl.className = "msg";
+  if (!name) { msgEl.textContent = "Enter your full name."; msgEl.className = "msg err"; return; }
+  if (!phone) { msgEl.textContent = "Enter a phone number."; msgEl.className = "msg err"; return; }
+
+  btn.disabled = true;
+  btn.textContent = "Booking…";
+  try {
+    localStorage.setItem("voya_name", name);
+    localStorage.setItem("voya_phone", phone);
+    const booking = await api("/bookings", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        hold_id: state.hold.hold_id,
+        rider_name: name,
+        rider_phone: phone,
+        payment_method: state.paymentMethod,
+        booking_source: "app",
+      }),
+    });
+    clearInterval(holdCountdownTimer);
+    state.booking = booking;
+    saveBooking({
+      id: booking.id,
+      origin: state.trip.origin,
+      destination: state.trip.destination,
+      departure_at: state.trip.departure_at,
+      seat: state.selectedSeat,
+    });
+    state.stack = [];
+    showTicket(booking);
+  } catch (e) {
+    msgEl.textContent = e.message;
+    msgEl.className = "msg err";
+    btn.disabled = false;
+    btn.textContent = "Confirm booking";
+  }
+}
+
+/* ---------- Screen: Ticket / confirmation ---------- */
+function showTicket(booking) {
+  setTab("tickets");
+  const pending = booking.status === "pending_payment";
+  const ticket = booking.ticket;
+  render(`
+    <div class="ticket">
+      <span class="status ${booking.status}">${booking.status.replace("_", " ")}</span>
+      <div class="route-big">${state.trip ? state.trip.origin + " → " + state.trip.destination : ""}</div>
+      <div class="fine">${state.trip ? new Date(state.trip.departure_at).toLocaleString([], {dateStyle:"medium", timeStyle:"short"}) : ""}</div>
+      <div class="fine">Seat #${state.selectedSeat || "—"} · ${booking.rider_name}</div>
+      <hr>
+      ${ticket ? `
+        <img src="/tickets/${ticket.id}/qr.png" alt="Boarding QR code">
+        <div class="code">${ticket.code}</div>
+        <div class="fine">Show this QR or 6-digit code at boarding. Works offline.</div>
+      ` : `
+        <div class="fine">Complete payment to receive your boarding ticket.</div>
+        <button class="primary" onclick="simulateMobileMoneyPay()">I've paid — confirm now</button>
+      `}
+    </div>
+    <button class="ghost" onclick="showSearch()">Book another trip</button>
+  `, pending ? "Awaiting payment" : "Your ticket");
+}
+
+async function simulateMobileMoneyPay() {
+  // Stands in for a PSP webhook hitting /bookings/{id}/confirm-payment.
+  try {
+    const confirmed = await api(`/bookings/${state.booking.id}/confirm-payment`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ psp_reference: "DEMO-" + Date.now() }),
+    });
+    state.booking = confirmed;
+    showTicket(confirmed);
+  } catch (e) {
+    alert(e.message);
+  }
+}
+
+/* ---------- Screen: My tickets ---------- */
+function showMyTickets() {
+  setTab("tickets");
+  const list = savedBookings();
+  if (!list.length) {
+    render(`<div class="empty">No bookings yet on this device.<br>Search a route to book your first trip.</div>`, "My tickets");
+    return;
+  }
+  render(`
+    <div class="saved-list">
+      ${list.map((b, i) => `
+        <div class="item" onclick="openSavedBooking(${i})">
+          <div class="route">${b.origin} → ${b.destination}</div>
+          <div class="meta">${new Date(b.departure_at).toLocaleString([], {dateStyle:"medium", timeStyle:"short"})} · Seat #${b.seat}</div>
+        </div>
+      `).join("")}
+    </div>
+  `, "My tickets");
+}
+
+async function openSavedBooking(i) {
+  const saved = savedBookings()[i];
+  try {
+    const booking = await api(`/bookings/${saved.id}`);
+    state.trip = { origin: saved.origin, destination: saved.destination, departure_at: saved.departure_at };
+    state.selectedSeat = saved.seat;
+    state.booking = booking;
+    state.stack = [showMyTickets];
+    showTicket(booking);
+  } catch (e) {
+    alert("Couldn't load this booking: " + e.message);
+  }
+}
+
+showSearch();
+</script>
+</body>
+</html>
