@@ -1,0 +1,488 @@
+<title>Voya — Transport Booking for West Africa</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout concept: a horizontal "route line" with stop-markers runs through every
+   section header, echoing the hand-painted route boards on West African buses and taxis. */
+:root{
+  --bg:#FBF4E8;
+  --surface:#FFFFFF;
+  --ink:#2B2117;
+  --ink-soft:#6B5D4D;
+  --line:#E3D5BC;
+  --ochre:#C96A2E;
+  --indigo:#2C4356;
+  --gold:#D9A441;
+  --good:#3E7D52;
+  --warn:#B4552C;
+  --crit:#9B3B3B;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#1C1712;
+    --surface:#262019;
+    --ink:#F3E9D8;
+    --ink-soft:#BCA98C;
+    --line:#3B3024;
+    --ochre:#E58448;
+    --indigo:#7FA3C2;
+    --gold:#E6B655;
+    --good:#5FA874;
+    --warn:#D97B4C;
+    --crit:#D96B6B;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#1C1712;
+  --surface:#262019;
+  --ink:#F3E9D8;
+  --ink-soft:#BCA98C;
+  --line:#3B3024;
+  --ochre:#E58448;
+  --indigo:#7FA3C2;
+  --gold:#E6B655;
+  --good:#5FA874;
+  --warn:#D97B4C;
+  --crit:#D96B6B;
+  color-scheme: dark;
+}
+
+*{box-sizing:border-box;}
+body{
+  background:var(--bg);
+  color:var(--ink);
+  font-family:"IBM Plex Sans", "Segoe UI", sans-serif;
+  line-height:1.6;
+  padding-left:max(16px, env(safe-area-inset-left,0px));
+  padding-right:max(16px, env(safe-area-inset-right,0px));
+}
+h1,h2,h3{
+  font-family:"Fraunces", Georgia, serif;
+  text-wrap:balance;
+  margin:0;
+  color:var(--ink);
+}
+.wrap{max-width:860px; margin:0 auto; padding-block:48px 96px;}
+
+/* cover */
+.cover{padding-block:28px 40px; border-bottom:1px solid var(--line);}
+.eyebrow{
+  font-family:"IBM Plex Mono", monospace;
+  font-size:0.72rem;
+  letter-spacing:0.14em;
+  text-transform:uppercase;
+  color:var(--ochre);
+  display:flex; align-items:center; gap:10px;
+}
+.eyebrow::before{content:"●"; color:var(--gold); font-size:0.6rem;}
+h1.title{font-size:clamp(2.4rem,6vw,3.6rem); font-weight:600; margin-top:10px; letter-spacing:-0.01em;}
+.subtitle{color:var(--ink-soft); font-size:1.1rem; max-width:40ch; margin-top:12px;}
+.tagline-row{display:flex; gap:10px; flex-wrap:wrap; margin-top:22px;}
+.chip{
+  font-family:"IBM Plex Mono", monospace;
+  font-size:0.72rem;
+  padding:5px 11px;
+  border:1px solid var(--line);
+  border-radius:100px;
+  color:var(--ink-soft);
+}
+
+/* route-line section headers */
+.route{
+  display:flex; align-items:center; gap:10px;
+  margin:64px 0 22px;
+}
+.route .stop{
+  width:11px; height:11px; border-radius:50%;
+  background:var(--ochre); flex:none;
+  box-shadow:0 0 0 3px var(--bg), 0 0 0 4px var(--line);
+}
+.route .rule{flex:1; height:2px; background:var(--line); min-width:0;}
+.route h2{font-size:1.5rem; font-weight:600; white-space:nowrap;}
+.route .num{
+  font-family:"IBM Plex Mono", monospace;
+  font-size:0.72rem; color:var(--ink-soft);
+}
+p.lede{color:var(--ink-soft); max-width:62ch; margin:0 0 20px;}
+
+/* generic content blocks */
+.grid{display:grid; grid-template-columns:repeat(2,1fr); gap:14px; margin-top:18px;}
+@media (max-width:620px){.grid{grid-template-columns:1fr;}}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:18px 20px;
+  min-width:0;
+}
+.card h3{font-size:1rem; font-weight:600; margin-bottom:6px;}
+.card p{margin:0; color:var(--ink-soft); font-size:0.93rem;}
+.card .tag{
+  font-family:"IBM Plex Mono", monospace;
+  font-size:0.68rem; letter-spacing:0.08em; text-transform:uppercase;
+  color:var(--ochre); display:block; margin-bottom:8px;
+}
+
+table{width:100%; border-collapse:collapse; font-size:0.92rem; margin-top:10px;}
+th,td{text-align:left; padding:10px 12px; border-bottom:1px solid var(--line); vertical-align:top;}
+th{font-family:"IBM Plex Mono", monospace; font-size:0.7rem; letter-spacing:0.06em; text-transform:uppercase; color:var(--ink-soft);}
+.table-wrap{overflow-x:auto; margin-top:12px;}
+
+.persona{
+  display:flex; gap:16px; padding:18px 0; border-bottom:1px solid var(--line);
+}
+.persona:last-child{border-bottom:none;}
+.persona .avatar{
+  flex:none; width:48px; height:48px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-family:"Fraunces", serif; font-weight:600; font-size:1.1rem;
+  background:var(--indigo); color:#FBF4E8;
+}
+.persona h3{font-size:1.02rem; margin-bottom:4px;}
+.persona p{margin:0; color:var(--ink-soft); font-size:0.92rem;}
+.persona .role{font-family:"IBM Plex Mono", monospace; font-size:0.7rem; color:var(--ochre); text-transform:uppercase; letter-spacing:0.06em;}
+
+.phase-list{display:flex; flex-direction:column; gap:0; margin-top:10px;}
+.phase{
+  display:grid; grid-template-columns:90px 1fr; gap:18px;
+  padding:18px 0; border-bottom:1px solid var(--line);
+}
+@media (max-width:560px){.phase{grid-template-columns:1fr;}}
+.phase .when{font-family:"IBM Plex Mono", monospace; font-size:0.75rem; color:var(--ink-soft);}
+.phase h3{font-size:1rem; margin-bottom:6px;}
+.phase p{margin:0; color:var(--ink-soft); font-size:0.92rem;}
+.phase .deliverables{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;}
+.phase .d{
+  font-size:0.75rem; padding:3px 9px; border-radius:100px;
+  background:var(--line); color:var(--ink);
+}
+
+.security-row{display:flex; gap:12px; align-items:flex-start; padding:14px 0; border-bottom:1px solid var(--line);}
+.security-row:last-child{border-bottom:none;}
+.security-row .mark{
+  flex:none; width:26px; height:26px; border-radius:7px;
+  display:flex; align-items:center; justify-content:center;
+  font-family:"IBM Plex Mono", monospace; font-size:0.72rem; font-weight:600;
+  background:var(--good); color:#fff;
+}
+.security-row h3{font-size:0.96rem; margin-bottom:3px;}
+.security-row p{margin:0; color:var(--ink-soft); font-size:0.9rem;}
+
+.quote{
+  border-left:3px solid var(--ochre); padding-left:18px; margin:24px 0;
+  font-family:"Fraunces", serif; font-size:1.15rem; font-style:italic; color:var(--ink);
+}
+
+.flow{
+  display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+  font-family:"IBM Plex Mono", monospace; font-size:0.78rem;
+  margin-top:14px; color:var(--ink-soft);
+}
+.flow .node{
+  padding:7px 12px; border:1px solid var(--line); border-radius:9px; background:var(--surface); color:var(--ink);
+}
+.flow .arrow{color:var(--ochre);}
+
+footer{
+  margin-top:72px; padding-top:24px; border-top:1px solid var(--line);
+  display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap;
+  font-family:"IBM Plex Mono", monospace; font-size:0.72rem; color:var(--ink-soft);
+}
+</style>
+<link rel="preconnect" href="https://fonts.gstatic.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<div class="wrap">
+
+  <div class="cover">
+    <div class="eyebrow">Product &amp; SaaS Blueprint · v1.0</div>
+    <h1 class="title">Voya</h1>
+    <p class="subtitle">A booking and fleet platform built for how West Africa actually moves — intercity buses, shared taxis, and okada, on networks that drop and phones that run low on storage.</p>
+    <div class="tagline-row">
+      <span class="chip">Passenger app</span>
+      <span class="chip">Operator SaaS</span>
+      <span class="chip">USSD + agent network</span>
+      <span class="chip">Mobile money native</span>
+    </div>
+  </div>
+
+  <!-- 01 -->
+  <div class="route"><div class="stop"></div><div class="rule"></div><h2>Why this, why now</h2><span class="num">01</span></div>
+  <p class="lede">Formal online booking exists for airlines and a handful of premium intercity lines. Everything below that — union buses, shared taxis (sept-place, tro-tro, gbaka), and moto-taxis — still runs on paper manifests, shouted destinations at the gare, and cash held by a tout. Riders over-pay, operators under-report, and nobody has a seat guarantee.</p>
+  <div class="quote">Voya doesn't try to replace the gare. It gives the gare a ticket counter in every rider's pocket, and a dashboard for the operator who's been running the route on memory.</div>
+  <div class="grid">
+    <div class="card">
+      <span class="tag">Market reality</span>
+      <h3>Informal ≠ unplannable</h3>
+      <p>Routes, departure windows, and fares are well known locally — they're just not written down anywhere a booking engine can read.</p>
+    </div>
+    <div class="card">
+      <span class="tag">Market reality</span>
+      <h3>Phones, not desktops</h3>
+      <p>Android devices under 2GB RAM, intermittent 3G, and prepaid data bundles are the default environment, not the edge case.</p>
+    </div>
+    <div class="card">
+      <span class="tag">Market reality</span>
+      <h3>Cash is trusted, apps aren't yet</h3>
+      <p>Mobile money (MTN MoMo, Orange Money, Wave) has crossed the trust line that card payments never did. Cash-on-boarding still has to work.</p>
+    </div>
+    <div class="card">
+      <span class="tag">Market reality</span>
+      <h3>Many languages, one receipt</h3>
+      <p>French, English, and Portuguese across borders; Wolof, Twi, Yoruba, Mooré, Bambara in speech. The ticket itself has to read clearly to everyone.</p>
+    </div>
+  </div>
+
+  <!-- 02 -->
+  <div class="route"><div class="stop"></div><div class="rule"></div><h2>Who it's for</h2><span class="num">02</span></div>
+  <p class="lede">Three people, three very different relationships to a "booking."</p>
+  <div class="persona">
+    <div class="avatar">A</div>
+    <div>
+      <div class="role">Rider</div>
+      <h3>Aïcha, 27 — travels Abidjan↔Bouaké monthly</h3>
+      <p>Wants to lock a seat before the bus fills, pay however she already pays for everything else, and show up with proof that works even if her screen is cracked and her data is off.</p>
+    </div>
+  </div>
+  <div class="persona">
+    <div class="avatar">K</div>
+    <div>
+      <div class="role">Operator</div>
+      <h3>Kwame — runs 14 coaches across 3 routes out of Kumasi</h3>
+      <p>Needs to know which seats are sold before the bus leaves the yard, stop losing fares to touts who pocket cash, and reconcile mobile-money payouts without a finance team.</p>
+    </div>
+  </div>
+  <div class="persona">
+    <div class="avatar">F</div>
+    <div>
+      <div class="role">Agent</div>
+      <h3>Fatou — runs a kiosk at the gare, no smartphone of her own</h3>
+      <p>Sells tickets to riders who have cash but no app, using a USSD code and a printed-receipt pad, and earns a commission per ticket sold.</p>
+    </div>
+  </div>
+
+  <!-- 03 -->
+  <div class="route"><div class="stop"></div><div class="rule"></div><h2>The three surfaces</h2><span class="num">03</span></div>
+  <p class="lede">One booking engine, three doors in — because not everyone opens the same door.</p>
+  <div class="table-wrap">
+    <table>
+      <tr><th>Surface</th><th>Who</th><th>Core job</th><th>Built for</th></tr>
+      <tr>
+        <td><strong>Voya app</strong><br>Android / iOS, PWA fallback</td>
+        <td>Riders with a smartphone</td>
+        <td>Search routes, hold &amp; pay for a seat, show a boarding pass, track loyalty credit</td>
+        <td>Offline-first, &lt;15MB install, works on 2G</td>
+      </tr>
+      <tr>
+        <td><strong>Voya Fleet</strong><br>Web dashboard</td>
+        <td>Operators, dispatchers, finance staff</td>
+        <td>Manage routes &amp; schedules, seat maps, live manifests, payouts, driver &amp; vehicle records</td>
+        <td>Desktop-first, works for a one-person back office</td>
+      </tr>
+      <tr>
+        <td><strong>Voya Agent</strong><br>USSD (*920#) + lightweight kiosk app</td>
+        <td>Gare agents, kiosk sellers, no-smartphone riders</td>
+        <td>Sell a seat, print/text a code, collect cash, earn commission</td>
+        <td>Feature-phone compatible, zero data cost</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- 04 -->
+  <div class="route"><div class="stop"></div><div class="rule"></div><h2>What a booking actually does</h2><span class="num">04</span></div>
+  <p class="lede">The full path from search to boarding, across the three surfaces.</p>
+  <div class="flow">
+    <span class="node">Search route &amp; date</span><span class="arrow">→</span>
+    <span class="node">Hold seat (90s lock)</span><span class="arrow">→</span>
+    <span class="node">Pay — MoMo / Wave / cash-to-agent</span><span class="arrow">→</span>
+    <span class="node">Offline-readable e-ticket (QR + 6-digit code)</span><span class="arrow">→</span>
+    <span class="node">Driver scans or keys code at boarding</span><span class="arrow">→</span>
+    <span class="node">Manifest &amp; payout update live</span>
+  </div>
+  <div class="grid" style="margin-top:28px;">
+    <div class="card">
+      <span class="tag">Feature</span>
+      <h3>Seat holds, not just bookings</h3>
+      <p>A 90-second soft lock on a seat while payment completes prevents double-selling on routes where three people are booking the same last seat at once.</p>
+    </div>
+    <div class="card">
+      <span class="tag">Feature</span>
+      <h3>Tickets that work with no signal</h3>
+      <p>The boarding pass is a signed QR plus a 6-digit fallback code, cached on-device, verifiable by the driver's phone without a network call.</p>
+    </div>
+    <div class="card">
+      <span class="tag">Feature</span>
+      <h3>Hybrid cash flows</h3>
+      <p>A seat can be reserved online and paid in cash to the agent at boarding — reservation and settlement are decoupled, which is how most of the market already thinks about paying.</p>
+    </div>
+    <div class="card">
+      <span class="tag">Feature</span>
+      <h3>Route-level trust score</h3>
+      <p>On-time departure rate and rider ratings per route (not just per operator) surface the lines that actually leave when they say they will.</p>
+    </div>
+    <div class="card">
+      <span class="tag">Feature</span>
+      <h3>Diaspora booking</h3>
+      <p>A relative abroad can book and pay for a parent's seat at home; the ticket ties to the traveler's phone number, not the payer's.</p>
+    </div>
+    <div class="card">
+      <span class="tag">Feature</span>
+      <h3>Cargo &amp; parcel slots</h3>
+      <p>Many coaches already carry parcels between cities informally — a parcel booking reuses the same seat-manifest logic as a line item, with a separate pickup code.</p>
+    </div>
+  </div>
+
+  <!-- 05 -->
+  <div class="route"><div class="stop"></div><div class="rule"></div><h2>Design principles</h2><span class="num">05</span></div>
+  <p class="lede">Soft UI here means calm, legible, and forgiving of bad connectivity and bright sunlight — not a visual trend.</p>
+  <div class="grid">
+    <div class="card">
+      <span class="tag">Principle</span>
+      <h3>One primary action per screen</h3>
+      <p>Every screen has exactly one obvious next step, sized for a thumb, legible at arm's length in direct sun.</p>
+    </div>
+    <div class="card">
+      <span class="tag">Principle</span>
+      <h3>State survives the network</h3>
+      <p>A search, a held seat, a half-filled form — all persist locally, so a dropped connection costs time, never progress.</p>
+    </div>
+    <div class="card">
+      <span class="tag">Principle</span>
+      <h3>Numbers before prose</h3>
+      <p>Price, departure time, and seat count render before any decorative content loads — the decision-critical data never waits behind an image.</p>
+    </div>
+    <div class="card">
+      <span class="tag">Principle</span>
+      <h3>Language is a setting, not a market split</h3>
+      <p>French, English, Portuguese, and the four most-requested local languages share one interface — switching never changes what a feature does.</p>
+    </div>
+    <div class="card">
+      <span class="tag">Principle</span>
+      <h3>Receipts people can act on</h3>
+      <p>Every confirmation (SMS, in-app, printed) names the plate number, the departure point, and a human contact — never just a transaction ID.</p>
+    </div>
+    <div class="card">
+      <span class="tag">Principle</span>
+      <h3>Errors name the fix</h3>
+      <p>"Your seat hold expired — search again" instead of a code. Every failure state is written by someone who has missed a bus.</p>
+    </div>
+  </div>
+
+  <!-- 06 -->
+  <div class="route"><div class="stop"></div><div class="rule"></div><h2>Security &amp; trust</h2><span class="num">06</span></div>
+  <p class="lede">Money, identity, and a seat on a moving vehicle are all on the line — security here is a product feature riders can feel, not just a compliance checkbox.</p>
+  <div class="security-row">
+    <div class="mark">PCI</div>
+    <div><h3>No card or wallet data touches Voya's servers</h3><p>Payments route through licensed mobile-money and card PSPs (Flutterwave, Paystack, direct MoMo APIs); Voya stores only a payment reference and status.</p></div>
+  </div>
+  <div class="security-row">
+    <div class="mark">AES</div>
+    <div><h3>Tickets are signed, not just generated</h3><p>Each QR/code is a signed token (operator ID, seat, trip, expiry) verified offline with a rotating public key cached on the driver's device — a photo of a ticket can't be reused on another date.</p></div>
+  </div>
+  <div class="security-row">
+    <div class="mark">KYC</div>
+    <div><h3>Operators are verified before they can list a route</h3><p>Business registration, vehicle roadworthiness document, and a bank or mobile-money settlement account are checked before any route goes live — riders book from a vetted list, not an open marketplace.</p></div>
+  </div>
+  <div class="security-row">
+    <div class="mark">2FA</div>
+    <div><h3>Fleet dashboard access is scoped and logged</h3><p>Dispatchers, drivers, and finance roles get least-privilege access; every manifest edit, refund, and payout is attributed and auditable.</p></div>
+  </div>
+  <div class="security-row">
+    <div class="mark">GDPR/DPA</div>
+    <div><h3>Data residency respects local law, not just EU habit</h3><p>Rider PII is stored in-region (aligned with Nigeria's NDPA, Ghana's Data Protection Act, and ECOWAS data frameworks as each market goes live) with a minimal retention window after a trip completes.</p></div>
+  </div>
+  <div class="security-row">
+    <div class="mark">ANTI</div>
+    <div><h3>Fraud signals are route-aware</h3><p>Velocity checks on holds, device-fingerprint limits on free promo credit, and anomaly flags on an agent's cash-ticket ratio catch the specific abuse patterns an informal-transit marketplace actually sees.</p></div>
+  </div>
+
+  <!-- 07 -->
+  <div class="route"><div class="stop"></div><div class="rule"></div><h2>Architecture at a glance</h2><span class="num">07</span></div>
+  <p class="lede">Built to degrade gracefully — a core booking flow that still completes when a secondary service is down.</p>
+  <div class="flow">
+    <span class="node">Rider app / USSD gateway / Fleet dashboard</span><span class="arrow">→</span>
+    <span class="node">API gateway (rate-limited, signed requests)</span><span class="arrow">→</span>
+    <span class="node">Booking service</span><span class="arrow">→</span>
+    <span class="node">Ledger &amp; payout service</span>
+  </div>
+  <div class="flow">
+    <span class="node">Payment service</span><span class="arrow">→</span>
+    <span class="node">MoMo / Wave / Card PSPs</span>
+  </div>
+  <div class="flow">
+    <span class="node">Notification service</span><span class="arrow">→</span>
+    <span class="node">SMS / WhatsApp / push, region-local gateways</span>
+  </div>
+  <div class="grid" style="margin-top:22px;">
+    <div class="card"><span class="tag">Data</span><h3>Postgres, region-sharded</h3><p>One primary region per country cluster; booking and ledger data never crosses borders at rest.</p></div>
+    <div class="card"><span class="tag">Resilience</span><h3>Async settlement</h3><p>A payment confirmation can lag the PSP by seconds without blocking the rider's ticket — the ticket issues on a provisional hold, confirmed server-side moments later.</p></div>
+    <div class="card"><span class="tag">Edge</span><h3>USSD as a first-class client</h3><p>The USSD gateway talks to the same booking API as the app — it is not a separate, lagging product.</p></div>
+    <div class="card"><span class="tag">Offline</span><h3>Local-first ticket cache</h3><p>Issued tickets, held seats, and the operator's public verification key sync to the device and work with zero connectivity at the boarding gate.</p></div>
+  </div>
+
+  <!-- 08 -->
+  <div class="route"><div class="stop"></div><div class="rule"></div><h2>Business model</h2><span class="num">08</span></div>
+  <div class="table-wrap">
+    <table>
+      <tr><th>Stream</th><th>Who pays</th><th>Rate</th></tr>
+      <tr><td>Booking commission</td><td>Operator, per completed trip</td><td>6–9%, tiered down with volume</td></tr>
+      <tr><td>Fleet SaaS subscription</td><td>Operator, per vehicle/month</td><td>Flat fee for dashboard, manifests, driver app</td></tr>
+      <tr><td>Agent commission split</td><td>Funded from booking commission</td><td>Agent keeps 10–15% of commission on cash sales</td></tr>
+      <tr><td>Payment float</td><td>Voya</td><td>Short settlement float on operator payouts (T+1/T+2)</td></tr>
+      <tr><td>Promoted routes</td><td>Operator, optional</td><td>Placement in search for new or growing routes</td></tr>
+    </table>
+  </div>
+
+  <!-- 09 -->
+  <div class="route"><div class="stop"></div><div class="rule"></div><h2>Roadmap</h2><span class="num">09</span></div>
+  <div class="phase-list">
+    <div class="phase">
+      <div class="when">Phase 0<br>Months 1–3</div>
+      <div>
+        <h3>Single corridor, one country</h3>
+        <p>Launch on Abidjan↔Bouaké or Accra↔Kumasi with 3–5 partner operators, app + USSD, cash-on-boarding as the default payment path.</p>
+        <div class="deliverables"><span class="d">Rider app MVP</span><span class="d">Fleet dashboard MVP</span><span class="d">USSD booking</span></div>
+      </div>
+    </div>
+    <div class="phase">
+      <div class="when">Phase 1<br>Months 4–8</div>
+      <div>
+        <h3>In-app payment &amp; agent network</h3>
+        <p>Add MoMo/Wave checkout, launch the kiosk-agent program at major gares, introduce the signed offline ticket.</p>
+        <div class="deliverables"><span class="d">Mobile money</span><span class="d">Agent app</span><span class="d">Offline QR tickets</span></div>
+      </div>
+    </div>
+    <div class="phase">
+      <div class="when">Phase 2<br>Months 9–14</div>
+      <div>
+        <h3>Country-wide, second market</h3>
+        <p>Scale across all major intercity corridors in market one, open market two; add loyalty credit and parcel bookings.</p>
+        <div class="deliverables"><span class="d">Loyalty program</span><span class="d">Parcel slots</span><span class="d">Second country</span></div>
+      </div>
+    </div>
+    <div class="phase">
+      <div class="when">Phase 3<br>Months 15–24</div>
+      <div>
+        <h3>Regional network effects</h3>
+        <p>Cross-border routes, diaspora booking, and a route-level trust score become the reason riders choose a line they've never taken.</p>
+        <div class="deliverables"><span class="d">Cross-border routing</span><span class="d">Diaspora payments</span><span class="d">Trust scoring</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 10 -->
+  <div class="route"><div class="stop"></div><div class="rule"></div><h2>How we'll know it's working</h2><span class="num">10</span></div>
+  <div class="grid">
+    <div class="card"><span class="tag">Rider</span><h3>Repeat booking rate</h3><p>Share of riders who book a second trip within 60 days — the real test of trust, above download counts.</p></div>
+    <div class="card"><span class="tag">Operator</span><h3>Manifest accuracy</h3><p>Gap between seats sold in Voya and seats actually filled at departure — the number that proves touts aren't still skimming.</p></div>
+    <div class="card"><span class="tag">Agent</span><h3>Cash-ticket settlement time</h3><p>Hours between a cash sale and its reconciliation in the ledger — speed here is what keeps agents honest and paid on time.</p></div>
+    <div class="card"><span class="tag">Platform</span><h3>On-time departure rate</h3><p>The single stat that decides whether Voya becomes the default way to check a route, not just book one.</p></div>
+  </div>
+
+  <footer>
+    <span>Voya — Transport Booking Platform</span>
+    <span>Blueprint v1.0 · West Africa launch markets: Côte d'Ivoire, Ghana</span>
+  </footer>
+
+</div>
