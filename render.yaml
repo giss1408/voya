@@ -1,0 +1,75 @@
+# Render Blueprint: two isolated environments from two git branches.
+#   integration branch -> voya-api-integration (+ voya-db-integration)
+#   prod branch        -> voya-api-prod        (+ voya-db-prod)
+# Create via Render Dashboard > New > Blueprint, pointing at this repo.
+# Verify plan names against Render's current pricing before applying.
+
+databases:
+  - name: voya-db-integration
+    plan: free
+    databaseName: voya
+    region: frankfurt
+  - name: voya-db-prod
+    plan: basic-256mb
+    databaseName: voya
+    region: frankfurt
+
+services:
+  - type: web
+    name: voya-api-integration
+    runtime: python
+    region: frankfurt
+    plan: free
+    branch: integration
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
+      - key: VOYA_ENV
+        value: integration
+      - key: VOYA_DATABASE_URL
+        fromDatabase:
+          name: voya-db-integration
+          property: connectionString
+      - key: VOYA_TICKET_SIGNING_KEY
+        generateValue: true
+      - key: VOYA_ADMIN_PASSWORD
+        generateValue: true
+      - key: VOYA_ADMIN_PHONE
+        sync: false
+      - key: VOYA_CORS_ORIGINS
+        value: "*"
+
+  - type: web
+    name: voya-api-prod
+    runtime: python
+    region: frankfurt
+    plan: starter
+    branch: prod
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
+      - key: VOYA_ENV
+        value: production
+      - key: VOYA_DATABASE_URL
+        fromDatabase:
+          name: voya-db-prod
+          property: connectionString
+      - key: VOYA_TICKET_SIGNING_KEY
+        generateValue: true
+      - key: VOYA_ADMIN_PASSWORD
+        sync: false
+      - key: VOYA_ADMIN_PHONE
+        sync: false
+      # Explicit comma-separated origins, e.g. https://fleet.example.com
+      - key: VOYA_CORS_ORIGINS
+        sync: false

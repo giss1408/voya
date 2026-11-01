@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
+from app.config import settings
 from app.db import Base, SessionLocal, engine
 from app.models import models  # noqa: F401  (registers models with Base)
 from app.routers import agent, auth, bookings, manifest, operators, trips
@@ -16,7 +17,7 @@ app = FastAPI(title="Voya Booking API", version="0.1.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.cors_origin_list,
     allow_methods=["*"],
     allow_headers=["*"],
 )

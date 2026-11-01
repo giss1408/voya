@@ -40,3 +40,26 @@ export VOYA_DATABASE_URL=postgresql://user:pass@localhost:5432/voya
 - Auth/RBAC on the Fleet dashboard (currently open — add before any
   non-local deployment)
 - Operator KYC workflow (status field exists, no verification flow yet)
+
+## Deploying to Render
+
+`render.yaml` (repo root) defines two environments:
+
+| Branch | Service | Database | `VOYA_ENV` |
+|--------|---------|----------|------------|
+| `integration` | `voya-api-integration` | `voya-db-integration` | `integration` |
+| `prod` | `voya-api-prod` | `voya-db-prod` | `production` |
+
+Flow: feature work on `master` -> merge to `integration` (auto-deploys, test) -> merge `integration` into `prod` (auto-deploys).
+
+Setup: Render Dashboard > New > Blueprint > this repo. Then fill the
+`sync: false` variables (`VOYA_ADMIN_PHONE`, `VOYA_ADMIN_PASSWORD` for prod,
+`VOYA_CORS_ORIGINS` for prod). Signing keys are generated per environment and
+must never be shared between them (tickets signed in one are invalid in the other).
+
+In `integration` and `production` the app refuses to start with dev default
+secrets, SQLite, or (production) wildcard CORS. Point the Flutter apps at a
+deployment with `--dart-define=VOYA_API_BASE=https://<service>.onrender.com`.
+
+Known gaps before real traffic: tables are created with `create_all` (no
+migrations; add Alembic), and the free integration database expires after 30 days.
