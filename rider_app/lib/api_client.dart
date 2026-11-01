@@ -48,15 +48,18 @@ class ApiClient {
     String message = res.reasonPhrase ?? 'Request failed';
     try {
       final body = jsonDecode(res.body);
-      if (body is Map && body['detail'] != null) message = body['detail'].toString();
+      if (body is Map && body['detail'] != null)
+        message = body['detail'].toString();
     } catch (_) {}
     throw ApiException(message);
   }
 
-  Future<List<Trip>> searchTrips({String? origin, String? destination, String? date}) async {
+  Future<List<Trip>> searchTrips(
+      {String? origin, String? destination, String? date}) async {
     final query = <String, String>{};
     if (origin != null && origin.isNotEmpty) query['origin'] = origin;
-    if (destination != null && destination.isNotEmpty) query['destination'] = destination;
+    if (destination != null && destination.isNotEmpty)
+      query['destination'] = destination;
     if (date != null && date.isNotEmpty) query['date'] = date;
     final res = await _client.get(_uri('/trips', query));
     final body = await _handle(res) as List;

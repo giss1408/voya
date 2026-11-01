@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'api_client.dart';
 import 'screens/my_tickets_screen.dart';
 import 'screens/search_screen.dart';
-import 'theme.dart';
+import 'package:voya_ui/voya_ui.dart';
 
 void main() {
   runApp(const VoyaApp());
@@ -64,11 +64,11 @@ class _RootShellState extends State<RootShell> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _tab,
         onDestinationSelected: (i) => setState(() => _tab = i),
-        backgroundColor: VoyaColors.surface,
-        indicatorColor: VoyaColors.ochre.withOpacity(0.15),
         destinations: const [
           NavigationDestination(icon: Icon(Icons.search), label: 'Search'),
-          NavigationDestination(icon: Icon(Icons.confirmation_number_outlined), label: 'My tickets'),
+          NavigationDestination(
+              icon: Icon(Icons.confirmation_number_outlined),
+              label: 'My tickets'),
         ],
       ),
     );

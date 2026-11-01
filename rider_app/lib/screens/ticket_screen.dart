@@ -4,7 +4,8 @@ import 'package:qr_flutter/qr_flutter.dart';
 
 import '../api_client.dart';
 import '../models.dart';
-import '../theme.dart';
+import 'package:voya_ui/voya_ui.dart';
+import '../ui/user_message.dart';
 
 class TicketScreen extends StatefulWidget {
   final ApiClient api;
@@ -41,10 +42,11 @@ class _TicketScreenState extends State<TicketScreen> {
         _booking.id,
         'DEMO-${DateTime.now().millisecondsSinceEpoch}',
       );
-      setState(() => _booking = confirmed);
+      if (mounted) setState(() => _booking = confirmed);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(userMessage(e))));
       }
     } finally {
       if (mounted) setState(() => _confirming = false);
@@ -59,7 +61,7 @@ class _TicketScreenState extends State<TicketScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(pending ? 'Awaiting payment' : 'Your ticket')),
       body: ListView(
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.all(Space.md),
         children: [
           Card(
             child: Padding(
@@ -70,16 +72,20 @@ class _TicketScreenState extends State<TicketScreen> {
                   const SizedBox(height: 12),
                   Text(
                     '${widget.trip.origin} → ${widget.trip.destination}',
-                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 17),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w700, fontSize: 17),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    DateFormat('EEE d MMM, HH:mm').format(widget.trip.departureAt),
-                    style: const TextStyle(color: VoyaColors.inkSoft, fontSize: 13),
+                    DateFormat('EEE d MMM, HH:mm')
+                        .format(widget.trip.departureAt),
+                    style: const TextStyle(
+                        color: VoyaColors.inkSoft, fontSize: 13),
                   ),
                   Text(
                     'Seat #${widget.seatNumber} · ${_booking.riderName}',
-                    style: const TextStyle(color: VoyaColors.inkSoft, fontSize: 13),
+                    style: const TextStyle(
+                        color: VoyaColors.inkSoft, fontSize: 13),
                   ),
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 16),
@@ -117,11 +123,7 @@ class _TicketScreenState extends State<TicketScreen> {
                     ElevatedButton(
                       onPressed: _confirming ? null : _simulateMobileMoneyPay,
                       child: _confirming
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                            )
+                          ? const ButtonSpinner()
                           : const Text("I've paid — confirm now"),
                     ),
                   ],
@@ -146,28 +148,12 @@ class _StatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Color bg;
-    Color fg;
-    switch (status) {
-      case 'confirmed':
-        bg = const Color(0xFFDFF0E3);
-        fg = VoyaColors.good;
-        break;
-      case 'boarded':
-        bg = const Color(0xFFDDE6ED);
-        fg = VoyaColors.indigo;
-        break;
-      default:
-        bg = const Color(0xFFF6E6D8);
-        fg = VoyaColors.warn;
-    }
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(100)),
-      child: Text(
-        status.replaceAll('_', ' ').toUpperCase(),
-        style: TextStyle(color: fg, fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.5),
-      ),
-    );
+    final (tone, icon, label) = switch (status) {
+      'confirmed' => (BadgeTone.good, Icons.check_circle_outline, 'Confirmed'),
+      'boarded' => (BadgeTone.info, Icons.directions_bus_outlined, 'Boarded'),
+      'pending_payment' => (BadgeTone.warn, Icons.schedule, 'Awaiting payment'),
+      _ => (BadgeTone.warn, Icons.info_outline, status.replaceAll('_', ' ')),
+    };
+    return StatusBadge(label: label, tone: tone, icon: icon);
   }
 }

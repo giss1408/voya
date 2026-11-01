@@ -16,3 +16,6 @@ backend/**/__pycache__/
 
 # OS cruft
 .DS_Store
+
+# Local test credentials
+TEST_USERS.md

@@ -5,7 +5,8 @@ import 'package:flutter/material.dart';
 import '../api_client.dart';
 import '../models.dart';
 import '../storage.dart';
-import '../theme.dart';
+import 'package:voya_ui/voya_ui.dart';
+import '../ui/user_message.dart';
 import 'ticket_screen.dart';
 
 class RiderDetailsScreen extends StatefulWidget {
@@ -46,6 +47,7 @@ class _RiderDetailsScreenState extends State<RiderDetailsScreen> {
     final storage = RiderStorage();
     final name = await storage.getSavedName();
     final phone = await storage.getSavedPhone();
+    if (!mounted) return;
     if (name != null) _nameCtrl.text = name;
     if (phone != null) _phoneCtrl.text = phone;
   }
@@ -53,6 +55,7 @@ class _RiderDetailsScreenState extends State<RiderDetailsScreen> {
   void _startCountdown() {
     void tick() {
       final left = widget.hold.expiresAt.difference(DateTime.now()).inSeconds;
+      if (!mounted) return;
       setState(() => _secondsLeft = left < 0 ? 0 : left);
       if (left <= 0) _timer?.cancel();
     }
@@ -116,7 +119,7 @@ class _RiderDetailsScreenState extends State<RiderDetailsScreen> {
         ),
       );
     } catch (e) {
-      setState(() => _error = e.toString());
+      if (mounted) setState(() => _error = userMessage(e));
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -129,35 +132,49 @@ class _RiderDetailsScreenState extends State<RiderDetailsScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Your details')),
       body: ListView(
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.all(Space.md),
         children: [
           Container(
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
             decoration: BoxDecoration(
-              color: const Color(0xFFF6E6D8),
-              borderRadius: BorderRadius.circular(10),
+              color: VoyaColors.warnTint,
+              borderRadius: BorderRadius.circular(Radii.md),
             ),
             child: Text(
               expired
                   ? 'Your seat hold expired — search again'
                   : 'Seat held for ${_secondsLeft}s — complete booking before it expires',
               textAlign: TextAlign.center,
-              style: const TextStyle(color: VoyaColors.warn, fontWeight: FontWeight.w600, fontSize: 13),
+              style: const TextStyle(
+                  color: VoyaColors.warn,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14),
             ),
           ),
           const SizedBox(height: 16),
           TextField(
             controller: _nameCtrl,
-            decoration: const InputDecoration(labelText: 'Full name', hintText: 'As it appears on ID'),
+            textInputAction: TextInputAction.next,
+            textCapitalization: TextCapitalization.words,
+            autofillHints: const [AutofillHints.name],
+            decoration: const InputDecoration(
+                labelText: 'Full name', hintText: 'As it appears on ID'),
           ),
           const SizedBox(height: 12),
           TextField(
             controller: _phoneCtrl,
             keyboardType: TextInputType.phone,
-            decoration: const InputDecoration(labelText: 'Phone number', hintText: '+225 07 00 00 00 00'),
+            textInputAction: TextInputAction.done,
+            autofillHints: const [AutofillHints.telephoneNumber],
+            decoration: const InputDecoration(
+                labelText: 'Phone number', hintText: '+225 07 00 00 00 00'),
           ),
           const SizedBox(height: 22),
-          const Text('How will you pay?', style: TextStyle(fontWeight: FontWeight.w600, color: VoyaColors.inkSoft, fontSize: 13)),
+          const Text('How will you pay?',
+              style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: VoyaColors.inkSoft,
+                  fontSize: 13)),
           const SizedBox(height: 8),
           _PayOption(
             label: 'Cash on boarding',
@@ -182,21 +199,21 @@ class _RiderDetailsScreenState extends State<RiderDetailsScreen> {
           ),
           const SizedBox(height: 18),
           _SummaryRow(label: 'Seat', value: '#${widget.seatNumber}'),
-          _SummaryRow(label: 'Route', value: '${widget.trip.origin} → ${widget.trip.destination}'),
-          _SummaryRow(label: 'Total', value: widget.trip.fare.toStringAsFixed(0), bold: true),
+          _SummaryRow(
+              label: 'Route',
+              value: '${widget.trip.origin} → ${widget.trip.destination}'),
+          _SummaryRow(
+              label: 'Total', value: formatFare(widget.trip.fare), bold: true),
           if (_error != null) ...[
             const SizedBox(height: 10),
-            Text(_error!, style: const TextStyle(color: VoyaColors.crit, fontSize: 13)),
+            Text(_error!,
+                style: const TextStyle(color: VoyaColors.crit, fontSize: 14)),
           ],
           const SizedBox(height: 18),
           ElevatedButton(
             onPressed: (_submitting || expired) ? null : _submit,
             child: _submitting
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                  )
+                ? const ButtonSpinner()
                 : const Text('Confirm booking'),
           ),
         ],
@@ -226,16 +243,17 @@ class _PayOption extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Material(
-        color: active ? const Color(0xFFFDF0E7) : VoyaColors.surface,
-        borderRadius: BorderRadius.circular(10),
+        color: active ? VoyaColors.ochreTint : VoyaColors.surface,
+        borderRadius: BorderRadius.circular(Radii.md),
         child: InkWell(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(Radii.md),
           onTap: () => onChanged(value),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: active ? VoyaColors.ochre : VoyaColors.line),
+              borderRadius: BorderRadius.circular(Radii.md),
+              border: Border.all(
+                  color: active ? VoyaColors.ochre : VoyaColors.line),
             ),
             child: Row(
               children: [
@@ -250,8 +268,12 @@ class _PayOption extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                      Text(sub, style: const TextStyle(color: VoyaColors.inkSoft, fontSize: 12)),
+                      Text(label,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w600, fontSize: 14)),
+                      Text(sub,
+                          style: const TextStyle(
+                              color: VoyaColors.inkSoft, fontSize: 12)),
                     ],
                   ),
                 ),
@@ -268,7 +290,8 @@ class _SummaryRow extends StatelessWidget {
   final String label;
   final String value;
   final bool bold;
-  const _SummaryRow({required this.label, required this.value, this.bold = false});
+  const _SummaryRow(
+      {required this.label, required this.value, this.bold = false});
 
   @override
   Widget build(BuildContext context) {
@@ -280,8 +303,12 @@ class _SummaryRow extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(fontWeight: bold ? FontWeight.w700 : FontWeight.w400)),
-          Text(value, style: TextStyle(fontWeight: bold ? FontWeight.w700 : FontWeight.w400)),
+          Text(label,
+              style: TextStyle(
+                  fontWeight: bold ? FontWeight.w700 : FontWeight.w400)),
+          Text(value,
+              style: TextStyle(
+                  fontWeight: bold ? FontWeight.w700 : FontWeight.w400)),
         ],
       ),
     );

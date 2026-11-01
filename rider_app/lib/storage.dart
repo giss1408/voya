@@ -36,8 +36,12 @@ class RiderStorage {
   Future<void> addSavedBooking(SavedBookingRef ref) async {
     final prefs = await SharedPreferences.getInstance();
     final existing = await getSavedBookings();
-    final updated = [ref, ...existing.where((b) => b.bookingId != ref.bookingId)];
+    final updated = [
+      ref,
+      ...existing.where((b) => b.bookingId != ref.bookingId)
+    ];
     final capped = updated.take(20).toList();
-    await prefs.setString(_bookingsKey, jsonEncode(capped.map((b) => b.toJson()).toList()));
+    await prefs.setString(
+        _bookingsKey, jsonEncode(capped.map((b) => b.toJson()).toList()));
   }
 }

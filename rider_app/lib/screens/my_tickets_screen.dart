@@ -4,7 +4,8 @@ import 'package:intl/intl.dart';
 import '../api_client.dart';
 import '../models.dart';
 import '../storage.dart';
-import '../theme.dart';
+import 'package:voya_ui/voya_ui.dart';
+import '../ui/user_message.dart';
 import 'ticket_screen.dart';
 
 class MyTicketsScreen extends StatefulWidget {
@@ -37,7 +38,10 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
         MaterialPageRoute(
           builder: (_) => TicketScreen(
             api: widget.api,
-            trip: _TripStub(origin: ref.origin, destination: ref.destination, departureAt: ref.departureAt),
+            trip: _TripStub(
+                origin: ref.origin,
+                destination: ref.destination,
+                departureAt: ref.departureAt),
             seatNumber: ref.seatNumber,
             booking: booking,
           ),
@@ -46,7 +50,8 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Couldn't load this booking: $e")),
+          SnackBar(
+              content: Text("Couldn't load this booking. ${userMessage(e)}")),
         );
       }
     }
@@ -59,24 +64,23 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
       body: RefreshIndicator(
         onRefresh: _load,
         child: _saved == null
-            ? const SizedBox.shrink()
+            ? const Padding(
+                padding: EdgeInsets.all(Space.md),
+                child: TripListSkeleton(),
+              )
             : _saved!.isEmpty
                 ? ListView(
+                    padding: const EdgeInsets.all(Space.md),
                     children: const [
-                      Padding(
-                        padding: EdgeInsets.only(top: 80),
-                        child: Center(
-                          child: Text(
-                            'No bookings yet on this device.\nSearch a route to book your first trip.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(color: VoyaColors.inkSoft),
-                          ),
-                        ),
+                      EmptyState(
+                        icon: Icons.confirmation_number_outlined,
+                        message:
+                            'No bookings yet on this device. Search a route to book your first trip.',
                       ),
                     ],
                   )
                 : ListView.builder(
-                    padding: const EdgeInsets.all(18),
+                    padding: const EdgeInsets.all(Space.md),
                     itemCount: _saved!.length,
                     itemBuilder: (_, i) {
                       final ref = _saved![i];
@@ -87,11 +91,13 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
                             onTap: () => _open(ref),
                             title: Text(
                               '${ref.origin} → ${ref.destination}',
-                              style: const TextStyle(fontWeight: FontWeight.w700),
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w700),
                             ),
                             subtitle: Text(
                               '${DateFormat('EEE d MMM, HH:mm').format(ref.departureAt)} · Seat #${ref.seatNumber}',
-                              style: const TextStyle(color: VoyaColors.inkSoft, fontSize: 12),
+                              style: const TextStyle(
+                                  color: VoyaColors.inkSoft, fontSize: 12),
                             ),
                             trailing: const Icon(Icons.chevron_right),
                           ),
@@ -107,16 +113,16 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
 /// TicketScreen only needs origin/destination/departure for display; a
 /// saved booking ref carries those locally without a trip refetch.
 class _TripStub extends Trip {
-  _TripStub({required String origin, required String destination, required DateTime departureAt})
+  _TripStub(
+      {required super.origin,
+      required super.destination,
+      required super.departureAt})
       : super(
           id: '',
           routeId: '',
           vehicleId: '',
-          departureAt: departureAt,
           fare: 0,
           status: '',
-          origin: origin,
-          destination: destination,
           seats: const [],
         );
 }

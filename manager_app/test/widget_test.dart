@@ -7,7 +7,7 @@ void main() {
     await tester.pumpWidget(const VoyaFleetApp());
     await tester.pump();
 
-    expect(find.text('Voya Fleet'), findsOneWidget);
+    expect(find.text('Voya'), findsOneWidget);
     expect(find.text('Sign in'), findsWidgets);
   });
 }

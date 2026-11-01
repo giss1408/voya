@@ -373,6 +373,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "14.2.5"
+  voya_ui:
+    dependency: "direct main"
+    description:
+      path: "../voya_ui"
+      relative: true
+    source: path
+    version: "0.1.0"
   web:
     dependency: transitive
     description:

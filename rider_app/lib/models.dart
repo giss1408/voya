@@ -55,7 +55,8 @@ class SeatHold {
   final String seatId;
   final DateTime expiresAt;
 
-  SeatHold({required this.holdId, required this.seatId, required this.expiresAt});
+  SeatHold(
+      {required this.holdId, required this.seatId, required this.expiresAt});
 
   factory SeatHold.fromJson(Map<String, dynamic> j) => SeatHold(
         holdId: j['hold_id'],
@@ -70,7 +71,11 @@ class Ticket {
   final String signedToken;
   final DateTime issuedAt;
 
-  Ticket({required this.id, required this.code, required this.signedToken, required this.issuedAt});
+  Ticket(
+      {required this.id,
+      required this.code,
+      required this.signedToken,
+      required this.issuedAt});
 
   factory Ticket.fromJson(Map<String, dynamic> j) => Ticket(
         id: j['id'],

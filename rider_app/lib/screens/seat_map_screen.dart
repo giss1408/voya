@@ -4,7 +4,8 @@ import 'package:intl/intl.dart';
 import '../api_client.dart';
 import '../models.dart';
 import '../storage.dart';
-import '../theme.dart';
+import 'package:voya_ui/voya_ui.dart';
+import '../ui/user_message.dart';
 import 'rider_details_screen.dart';
 
 class SeatMapScreen extends StatefulWidget {
@@ -30,7 +31,7 @@ class _SeatMapScreenState extends State<SeatMapScreen> {
 
   Future<void> _refresh() async {
     final fresh = await widget.api.getTrip(_trip.id);
-    setState(() => _trip = fresh);
+    if (mounted) setState(() => _trip = fresh);
   }
 
   Future<void> _holdSeat() async {
@@ -59,36 +60,39 @@ class _SeatMapScreenState extends State<SeatMapScreen> {
       );
       // Seat may now be booked/held by us or released back — refresh either way.
       await _refresh();
-      setState(() => _selectedSeat = null);
+      if (mounted) setState(() => _selectedSeat = null);
     } catch (e) {
-      setState(() => _error = e.toString());
-      await _refresh();
+      if (mounted) setState(() => _error = userMessage(e));
+      try {
+        await _refresh();
+      } catch (_) {}
     } finally {
-      setState(() => _holding = false);
+      if (mounted) setState(() => _holding = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final sorted = [..._trip.seats]..sort((a, b) => a.seatNumber.compareTo(b.seatNumber));
+    final sorted = [..._trip.seats]
+      ..sort((a, b) => a.seatNumber.compareTo(b.seatNumber));
 
     return Scaffold(
       appBar: AppBar(title: const Text('Choose a seat')),
       body: Padding(
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.all(Space.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               '${_trip.origin} → ${_trip.destination}',
-              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 17),
+              style: Theme.of(context).textTheme.titleLarge,
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: Space.xs),
             Text(
-              '${DateFormat('EEE d MMM, HH:mm').format(_trip.departureAt)} · ${_trip.fare.toStringAsFixed(0)} fare',
-              style: const TextStyle(color: VoyaColors.inkSoft, fontSize: 13),
+              '${DateFormat('EEE d MMM, HH:mm').format(_trip.departureAt)} · ${formatFare(_trip.fare)}',
+              style: Theme.of(context).textTheme.bodySmall,
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: Space.md),
             Expanded(
               child: GridView.builder(
                 itemCount: sorted.length,
@@ -102,7 +106,8 @@ class _SeatMapScreenState extends State<SeatMapScreen> {
                   seat: sorted[i],
                   selected: _selectedSeat == sorted[i].seatNumber,
                   onTap: sorted[i].status == 'available'
-                      ? () => setState(() => _selectedSeat = sorted[i].seatNumber)
+                      ? () =>
+                          setState(() => _selectedSeat = sorted[i].seatNumber)
                       : null,
                 ),
               ),
@@ -110,17 +115,14 @@ class _SeatMapScreenState extends State<SeatMapScreen> {
             const _Legend(),
             if (_error != null) ...[
               const SizedBox(height: 8),
-              Text(_error!, style: const TextStyle(color: VoyaColors.crit, fontSize: 13)),
+              Text(_error!,
+                  style: const TextStyle(color: VoyaColors.crit, fontSize: 14)),
             ],
             const SizedBox(height: 12),
             ElevatedButton(
               onPressed: _selectedSeat == null || _holding ? null : _holdSeat,
               child: _holding
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                    )
+                  ? const ButtonSpinner()
                   : Text(_selectedSeat == null
                       ? 'Select a seat to continue'
                       : 'Hold seat $_selectedSeat for 90s'),
@@ -136,36 +138,62 @@ class _SeatTile extends StatelessWidget {
   final Seat seat;
   final bool selected;
   final VoidCallback? onTap;
-  const _SeatTile({required this.seat, required this.selected, required this.onTap});
+  const _SeatTile(
+      {required this.seat, required this.selected, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    final taken = seat.status != 'available';
+    final available = seat.status == 'available';
+    final held = seat.status == 'held';
     Color bg = VoyaColors.surface;
     Color fg = VoyaColors.ink;
-    if (taken) {
+    IconData? mark;
+    if (!available) {
       bg = VoyaColors.line;
       fg = VoyaColors.inkSoft;
+      mark = held ? Icons.schedule : Icons.lock;
     } else if (selected) {
       bg = VoyaColors.ochre;
       fg = Colors.white;
+      mark = Icons.check;
     }
+    final state = selected
+        ? 'selected'
+        : available
+            ? 'free'
+            : held
+                ? 'held by someone else'
+                : 'taken';
 
-    return Material(
-      color: bg,
-      borderRadius: BorderRadius.circular(8),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(8),
-        onTap: onTap,
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: VoyaColors.line),
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            '${seat.seatNumber}',
-            style: TextStyle(color: fg, fontWeight: FontWeight.w700),
+    return Semantics(
+      button: available,
+      selected: selected,
+      label: 'Seat ${seat.seatNumber}, $state',
+      excludeSemantics: true,
+      child: Material(
+        color: bg,
+        borderRadius: BorderRadius.circular(Radii.sm),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(Radii.sm),
+          onTap: onTap,
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(Radii.sm),
+              border: Border.all(
+                  color: selected ? VoyaColors.ochre : VoyaColors.line),
+            ),
+            alignment: Alignment.center,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '${seat.seatNumber}',
+                  style: TextStyle(
+                      color: fg, fontWeight: FontWeight.w700, fontSize: 16),
+                ),
+                if (mark != null) Icon(mark, size: 12, color: fg),
+              ],
+            ),
           ),
         ),
       ),
@@ -178,25 +206,43 @@ class _Legend extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget swatch(Color c) => Container(
-          width: 12,
-          height: 12,
-          margin: const EdgeInsets.only(right: 6),
-          decoration: BoxDecoration(color: c, borderRadius: BorderRadius.circular(3)),
+    Widget item(Color c, IconData? icon, String label, {bool border = false}) =>
+        Padding(
+          padding: const EdgeInsets.only(right: Space.md),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 16,
+                height: 16,
+                margin: const EdgeInsets.only(right: Space.xs + 2),
+                decoration: BoxDecoration(
+                  color: c,
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: VoyaColors.line),
+                ),
+                child: icon == null
+                    ? null
+                    : Icon(icon,
+                        size: 10,
+                        color: c == VoyaColors.ochre
+                            ? Colors.white
+                            : VoyaColors.inkSoft),
+              ),
+              Text(label, style: Theme.of(context).textTheme.bodySmall),
+            ],
+          ),
         );
 
     return Padding(
-      padding: const EdgeInsets.only(top: 10),
-      child: Row(
+      padding: const EdgeInsets.only(top: Space.sm + 2),
+      child: Wrap(
+        runSpacing: Space.xs,
         children: [
-          swatch(VoyaColors.surface),
-          const Text('Free', style: TextStyle(fontSize: 12, color: VoyaColors.inkSoft)),
-          const SizedBox(width: 16),
-          swatch(VoyaColors.line),
-          const Text('Taken', style: TextStyle(fontSize: 12, color: VoyaColors.inkSoft)),
-          const SizedBox(width: 16),
-          swatch(VoyaColors.ochre),
-          const Text('Selected', style: TextStyle(fontSize: 12, color: VoyaColors.inkSoft)),
+          item(VoyaColors.surface, null, 'Free'),
+          item(VoyaColors.line, Icons.schedule, 'Held'),
+          item(VoyaColors.line, Icons.lock, 'Taken'),
+          item(VoyaColors.ochre, Icons.check, 'Selected'),
         ],
       ),
     );
